@@ -43,6 +43,8 @@ paths:
                   $ref: '#/components/schemas/CaseResponse'
         '500':
           $ref: '#/components/responses/500InternalError'
+      tags:
+        - Casos
     post:
       summary: Crear un nuevo caso
       description: Registra un caso en el sistema con validación de campos obligatorios.
@@ -74,6 +76,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/500InternalError'
+      tags:
+        - Casos
   /cases/important/comments:
     get:
       summary: Obtener comentarios destacados de casos importantes
@@ -122,6 +126,8 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '500':
           $ref: '#/components/responses/500InternalError'
+      tags:
+        - Casos
     put:
       summary: Actualizar un caso completo
       description: 'Modifica los datos del caso. Si el estado cambia a "Closed", remueve de forma automática la importancia del caso y desmarca sus comentarios destacados.'
