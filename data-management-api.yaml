@@ -1,14 +1,31 @@
 openapi: 3.0.3
 info:
   title: API de Gestión de Casos de Soporte
-  description: 'API interna para el seguimiento de tickets importantes, productos, comentarios y archivos adjuntos.'
+  description: API interna para el seguimiento de tickets importantes, productos, comentarios y archivos adjuntos.
   version: 1.0.0
 servers:
-  - url: 'http://localhost:3004/api'
+  - url: http://localhost:3002/api
     description: Servidor de desarrollo local
+
+tags:
+  - name: Health
+    description: Verificación del estado de la API
+  - name: Cases
+    description: Gestión de casos de soporte (crear, actualizar, eliminar, listar)
+  - name: Attachments
+    description: Carga y descarga de archivos adjuntos
+  - name: Comments
+    description: Comentarios y notas en casos
+  - name: Products
+    description: Gestión de productos
+  - name: Documentation
+    description: Registros y enlaces de documentación
+
 paths:
   /health:
     get:
+      tags:
+        - Health
       summary: Verificación del estado del servidor
       description: Retorna el estado de salud de la API y de la base de datos.
       responses:
@@ -28,8 +45,11 @@ paths:
                   database:
                     type: string
                     example: connected
+
   /cases:
     get:
+      tags:
+        - Cases
       summary: Obtener todos los casos
       description: Devuelve una lista de todos los casos de soporte ordenados por importancia y fecha de creación.
       responses:
@@ -43,9 +63,10 @@ paths:
                   $ref: '#/components/schemas/CaseResponse'
         '500':
           $ref: '#/components/responses/500InternalError'
-      tags:
-        - Casos
+          
     post:
+      tags:
+        - Cases
       summary: Crear un nuevo caso
       description: Registra un caso en el sistema con validación de campos obligatorios.
       requestBody:
@@ -76,12 +97,13 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/500InternalError'
-      tags:
-        - Casos
+
   /cases/important/comments:
     get:
+      tags:
+        - Cases
       summary: Obtener comentarios destacados de casos importantes
-      description: 'Devuelve hasta 15 comentarios marcados con "estrella" pertenecientes a casos importantes, ordenados por prioridad (High, Medium, Low).'
+      description: Devuelve hasta 15 comentarios marcados con "estrella" pertenecientes a casos importantes, ordenados por prioridad (High, Medium, Low).
       responses:
         '200':
           description: Lista de comentarios destacados obtenidos
@@ -93,7 +115,8 @@ paths:
                   $ref: '#/components/schemas/StarredComment'
         '500':
           $ref: '#/components/responses/500InternalError'
-  '/cases/{id}':
+
+  /cases/{id}:
     parameters:
       - name: id
         in: path
@@ -102,6 +125,8 @@ paths:
         schema:
           type: integer
     get:
+      tags:
+        - Cases
       summary: Obtener un caso por ID
       description: Devuelve los detalles de un caso específico incluyendo su lista de comentarios y archivos adjuntos.
       responses:
@@ -126,11 +151,12 @@ paths:
           $ref: '#/components/responses/404NotFound'
         '500':
           $ref: '#/components/responses/500InternalError'
-      tags:
-        - Casos
+          
     put:
+      tags:
+        - Cases
       summary: Actualizar un caso completo
-      description: 'Modifica los datos del caso. Si el estado cambia a "Closed", remueve de forma automática la importancia del caso y desmarca sus comentarios destacados.'
+      description: Modifica los datos del caso. Si el estado cambia a "Closed", remueve de forma automática la importancia del caso y desmarca sus comentarios destacados.
       requestBody:
         required: true
         content:
@@ -154,7 +180,10 @@ paths:
           description: Error de validación o número de caso duplicado
         '500':
           $ref: '#/components/responses/500InternalError'
+
     patch:
+      tags:
+        - Cases
       summary: Actualizar parcialmente el estado de un caso (Prueba)
       description: Endpoint de prueba rápido para cambiar el estado (`status`) de un caso específico.
       requestBody:
@@ -174,7 +203,10 @@ paths:
           description: Estado actualizado
         '400':
           description: Faltan parámetros obligatorios
+          
     delete:
+      tags:
+        - Cases
       summary: Eliminar un caso
       description: Borra el caso de la base de datos y elimina físicamente del almacenamiento local todos sus archivos adjuntos.
       responses:
@@ -182,8 +214,11 @@ paths:
           description: Caso y archivos eliminados exitosamente
         '500':
           $ref: '#/components/responses/500InternalError'
-  '/cases/{id}/importance':
+
+  /cases/{id}/importance:
     patch:
+      tags:
+        - Cases
       summary: Cambiar importancia de un caso
       parameters:
         - name: id
@@ -206,8 +241,11 @@ paths:
       responses:
         '200':
           description: Importancia modificada con éxito
-  '/cases/{id}/attachments':
+
+  /cases/{id}/attachments:
     post:
+      tags:
+        - Attachments
       summary: Subir un archivo adjunto al caso
       description: Sube un archivo físico asociado a un caso usando codificación `multipart/form-data`.
       parameters:
@@ -236,8 +274,11 @@ paths:
           description: No se detectó ningún archivo en la petición
         '404':
           description: El caso especificado no existe
-  '/attachments/{filename}':
+
+  /attachments/{filename}:
     get:
+      tags:
+        - Attachments
       summary: Descargar o visualizar archivo adjunto
       parameters:
         - name: filename
@@ -256,8 +297,11 @@ paths:
                 example: inline; filename="soporte.pdf"
         '404':
           description: El archivo no existe en base de datos o en el disco
-  '/attachments/{id}':
+
+  /attachments/{id}:
     delete:
+      tags:
+        - Attachments
       summary: Eliminar un archivo adjunto por ID
       parameters:
         - name: id
@@ -268,8 +312,11 @@ paths:
       responses:
         '200':
           description: Archivo eliminado del disco y base de datos
-  '/cases/{id}/comments':
+
+  /cases/{id}/comments:
     post:
+      tags:
+        - Comments
       summary: Agregar un comentario a un caso
       parameters:
         - name: id
@@ -288,19 +335,19 @@ paths:
               properties:
                 content:
                   type: string
-                  example: El cliente menciona que el error persiste en producción.
+                  example: "El cliente menciona que el error persiste en producción."
                 priority:
                   type: string
-                  enum:
-                    - High
-                    - Medium
-                    - Low
+                  enum: [High, Medium, Low]
                   default: Medium
       responses:
         '201':
           description: Comentario creado con éxito
-  '/comments/{id}/star':
+
+  /comments/{id}/star:
     patch:
+      tags:
+        - Comments
       summary: Alternar destacado (estrella) de un comentario
       parameters:
         - name: id
@@ -319,15 +366,16 @@ paths:
               properties:
                 is_starred:
                   type: integer
-                  enum:
-                    - 0
-                    - 1
+                  enum: [0, 1]
                   example: 1
       responses:
         '200':
           description: Estado de destacado actualizado
-  '/comments/{id}':
+
+  /comments/{id}:
     delete:
+      tags:
+        - Comments
       summary: Eliminar un comentario
       parameters:
         - name: id
@@ -338,13 +386,18 @@ paths:
       responses:
         '200':
           description: Comentario borrado con éxito
+
   /products:
     get:
+      tags:
+        - Products
       summary: Listar todos los productos disponibles
       responses:
         '200':
           description: Lista de productos ordenada alfabéticamente
     post:
+      tags:
+        - Products
       summary: Crear un nuevo producto
       requestBody:
         required: true
@@ -357,15 +410,18 @@ paths:
               properties:
                 name:
                   type: string
-                  example: SwaggerHub On-Premise
+                  example: "SwaggerHub On-Premise"
                 description:
                   type: string
-                  example: Instancia local para despliegues empresariales
+                  example: "Instancia local para despliegues empresariales"
       responses:
         '201':
           description: Producto creado con éxito
-  '/products/{id}':
+
+  /products/{id}:
     delete:
+      tags:
+        - Products
       summary: Eliminar un producto
       parameters:
         - name: id
@@ -376,11 +432,15 @@ paths:
       responses:
         '200':
           description: Producto eliminado exitosamente
-      operationId: ''
+
   /documentation:
     get:
+      tags:
+        - Documentation
       summary: Listar todos los registros de documentación
     post:
+      tags:
+        - Documentation
       summary: Crear registro de documentación vinculada a un producto
       requestBody:
         required: true
@@ -398,18 +458,21 @@ paths:
                   example: 1
                 documentation_url:
                   type: string
-                  example: 'https://support.smartbear.com/swaggerhub/docs/'
+                  example: "https://support.smartbear.com/swaggerhub/docs/"
                 description:
                   type: string
-                  example: Manual oficial de usuario
+                  example: "Manual oficial de usuario"
                 labels:
                   type: string
-                  example: 'docs,help,guide'
+                  example: "docs,help,guide"
       responses:
         '201':
           description: Documentación registrada con éxito
-  '/documentation/{id}':
+
+  /documentation/{id}:
     get:
+      tags:
+        - Documentation
       summary: Obtener registro de documentación por ID
       parameters:
         - name: id
@@ -418,6 +481,8 @@ paths:
           schema:
             type: integer
     put:
+      tags:
+        - Documentation
       summary: Actualizar registro de documentación completo
       parameters:
         - name: id
@@ -432,7 +497,10 @@ paths:
             schema:
               type: object
     delete:
+      tags:
+        - Documentation
       summary: Eliminar registro de documentación
+
 components:
   responses:
     500InternalError:
@@ -447,6 +515,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+
   schemas:
     CaseCreate:
       type: object
@@ -457,33 +526,34 @@ components:
       properties:
         case_number:
           type: string
-          example: CS-002345
+          example: "CS-002345"
         status:
           type: string
-          example: Open
+          example: "Open"
         description:
           type: string
-          example: El cliente reporta lentitud en el validador de OpenAPI de SwaggerHub.
+          example: "El cliente reporta lentitud en el validador de OpenAPI de SwaggerHub."
         root_cause:
           type: string
           nullable: true
-          example: Sintaxis YAML mal estructurada en referencias circulares.
+          example: "Sintaxis YAML mal estructurada en referencias circulares."
         jira_ticket_url:
           type: string
           nullable: true
-          example: 'https://jira.com/browse/SWG-4902'
+          example: "https://jira.com/browse/SWG-4902"
         salesforce_url:
           type: string
           nullable: true
-          example: 'https://salesforce.com/case/0034512'
+          example: "https://salesforce.com/case/0034512"
         labels:
           type: string
           nullable: true
-          example: 'validator,yaml,high-priority'
+          example: "validator,yaml,high-priority"
         product_id:
           type: integer
           nullable: true
           example: 1
+
     CaseResponse:
       allOf:
         - type: object
@@ -493,14 +563,12 @@ components:
               example: 1
             is_important:
               type: integer
-              enum:
-                - 0
-                - 1
+              enum: [0, 1]
               example: 1
             product_name:
               type: string
               nullable: true
-              example: SwaggerHub SaaS
+              example: "SwaggerHub SaaS"
             created_at:
               type: string
               format: date-time
@@ -508,6 +576,7 @@ components:
               type: string
               format: date-time
         - $ref: '#/components/schemas/CaseCreate'
+
     Comment:
       type: object
       properties:
@@ -521,15 +590,14 @@ components:
           type: string
         priority:
           type: string
-          example: High
+          example: "High"
         is_starred:
           type: integer
-          enum:
-            - 0
-            - 1
+          enum: [0, 1]
         created_at:
           type: string
           format: date-time
+
     StarredComment:
       type: object
       properties:
@@ -549,6 +617,7 @@ components:
           type: string
         case_id:
           type: integer
+
     Attachment:
       type: object
       properties:
@@ -567,9 +636,10 @@ components:
         created_at:
           type: string
           format: date-time
+
     ErrorResponse:
       type: object
       properties:
         error:
           type: string
-          example: Failed to fetch cases
+          example: "Failed to fetch cases"
