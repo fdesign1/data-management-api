@@ -3,7 +3,7 @@ info:
   title: API de Gestión de Casos de Soporte
   description: |-
     API interna para el seguimiento de tickets importantes, productos, comentarios y archivos adjuntos.
-    test branches
+    test branches2
   version: 1.0.0
 servers:
   - url: 'http://localhost:3002/api'
